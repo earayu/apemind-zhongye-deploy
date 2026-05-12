@@ -16,9 +16,6 @@ services:
   # Application Services (Default startup, excluded from infra)
   # ==============================================
   api: &api
-    build:
-      context: .
-      dockerfile: ./Dockerfile
     image: ${REGISTRY:-docker.io}/apecloud/aperag-enterprise:${VERSION:-2.1.6}
     container_name: aperag-api
     depends_on:
@@ -65,9 +62,6 @@ services:
       start_period: 30s  # Give API time to start up before first check
 
   frontend:
-    build:
-      context: ./web
-      dockerfile: ./Dockerfile
     image: ${REGISTRY:-docker.io}/apecloud/aperag-enterprise-frontend:${VERSION:-2.1.6}
     container_name: aperag-frontend
     depends_on:
@@ -82,9 +76,6 @@ services:
       - "3000:3000"
 
   indexing-worker:
-    build:
-      context: .
-      dockerfile: ./Dockerfile
     image: ${REGISTRY:-docker.io}/apecloud/aperag-enterprise:${VERSION:-2.1.6}
     container_name: aperag-indexing-worker
     depends_on:

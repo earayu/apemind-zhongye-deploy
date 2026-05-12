@@ -107,7 +107,7 @@ docker compose up -d
 docker compose ps
 ```
 
-正常情况下，以下 8 个服务应全部显示 `healthy` 或 `running`，`minio-create-bucket` 显示 `Exited (0)` 属于正常（它是一次性初始化任务，完成后退出）：
+正常情况下，以下 9 个长期服务应全部显示 `healthy` 或 `running`，`aperag-minio-init` 显示 `Exited (0)` 属于正常（它是一次性初始化任务，完成后退出）：
 
 ```
 aperag-api               Up X minutes (healthy)
@@ -225,7 +225,6 @@ docker compose up -d
 ```bash
 # 停止并删除所有数据卷
 docker compose down -v
-docker volume prune
 ```
 
 ---
@@ -253,8 +252,8 @@ docker compose logs es
 ```bash
 # Linux - 查看占用 3000 端口的进程
 lsof -i :3000
-# 找到 PID 后停止该进程
-kill -9 <PID>
+# 确认不是重要业务进程后，再停止该进程
+kill <PID>
 
 # 常用端口：3000（前端）、8000（API）、5432（数据库）、6379（Redis）、6333（Qdrant）、9200（ES）
 ```
