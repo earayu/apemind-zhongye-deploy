@@ -55,8 +55,8 @@ JWT_SECRET=在这里填写随机字符串
 # 2. 阿里云百炼 API Key（必填，用于 AI 对话能力）
 DASHSCOPE_API_KEY=sk-xxxx
 
-# 3. OpenRouter API Key（选填，用于接入其他 AI 模型）
-# OPENROUTER_API_KEY=sk-or-v1-xxxx
+# 3. OpenRouter API Key（用于接入其他 AI 模型）
+OPENROUTER_API_KEY=sk-or-v1-xxxx
 ```
 
 > ⚠️ **安全提示**：`.env` 文件包含密钥，请勿发送给他人，请勿上传到任何代码仓库。
