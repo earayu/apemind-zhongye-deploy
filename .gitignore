@@ -1,0 +1,12 @@
+# 本地环境配置（含密钥，绝不提交）
+.env
+secrets.env
+*.secret
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# OS
+.DS_Store
