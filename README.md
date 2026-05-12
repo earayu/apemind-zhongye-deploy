@@ -249,14 +249,41 @@ docker compose logs es
 ```
 
 **问题 3：端口被占用**
-```bash
-# Linux - 查看占用 3000 端口的进程
-lsof -i :3000
-# 确认不是重要业务进程后，再停止该进程
-kill <PID>
 
-# 常用端口：3000（前端）、8000（API）、5432（数据库）、6379（Redis）、6333（Qdrant）、9200（ES）
+首先一次性查看所有 ApeRAG 所需端口是否冲突：
+```bash
+sudo ss -lntp | grep -E ":(3000|8000|5432|5433|6379|6333|9200|9000)"
 ```
+
+| 端口 | 服务 | Ubuntu 常见冲突来源 | 解决方案 |
+|------|------|---------------------|---------|
+| 5432 | postgres | 系统预装 PostgreSQL | `sudo systemctl stop postgresql && sudo systemctl disable postgresql` |
+| 5433 | postgres-graph | 系统预装 PostgreSQL | 同上 |
+| 6379 | redis | 系统预装 Redis | `sudo systemctl stop redis-server && sudo systemctl disable redis-server` |
+| 9200 | elasticsearch | 系统 ES | `sudo systemctl stop elasticsearch` |
+| 6333 | qdrant | 少见 | 改端口映射（见下方） |
+| 9000 | minio | 少见 | 改端口映射（见下方） |
+| 8000 | api | 其他 Web 服务 | 改端口映射（见下方） |
+| 3000 | frontend | 其他 Web 服务 | 改端口映射（见下方） |
+
+**方案 A（推荐）：停止系统服务**
+
+如果冲突来自系统 PostgreSQL（Ubuntu 最常见）：
+```bash
+sudo systemctl stop postgresql
+sudo systemctl disable postgresql   # 禁止开机自启
+docker compose up -d                 # 重新启动
+```
+
+**方案 B：修改端口映射**（系统服务不能停时使用）
+
+编辑 `docker-compose.yml`，找到对应服务的 `ports` 配置，修改宿主机端口（冒号左边的数字）。示例：
+```yaml
+# 把 5432 改为 15432（冒号左边是宿主机端口，右边是容器内端口，不要改右边）
+ports:
+  - "15432:5432"
+```
+> 注意：容器之间通过服务名互相访问（如 `postgres`），不受宿主机端口影响，只改宿主机映射即可。修改后重新 `docker compose up -d`。
 
 **问题 4：Qdrant / Redis 连接报 "Server disconnected" 错误**
 
