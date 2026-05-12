@@ -22,7 +22,13 @@ python3 --version
 df -h .
 ```
 
-> **如果 `docker compose` 命令不可用**，请参考 [Docker 官方文档](https://docs.docker.com/compose/install/) 安装 docker-compose-plugin。
+> **如果 `docker compose` 命令不可用**，在 Ubuntu 上运行以下命令安装：
+> ```bash
+> sudo apt-get update
+> sudo apt-get install -y docker.io docker-compose-plugin
+> sudo systemctl enable --now docker
+> sudo usermod -aG docker $USER  # 无需 sudo 运行 docker，需重新登录生效
+> ```
 
 ---
 
@@ -61,6 +67,17 @@ OPENROUTER_API_KEY=sk-or-v1-xxxx
 
 > ⚠️ **安全提示**：`.env` 文件包含密钥，请勿发送给他人，请勿上传到任何代码仓库。
 
+**3.3 代理环境配置（如果公司网络有 HTTP/HTTPS 代理）**
+
+如果服务器配置了 `HTTP_PROXY` / `HTTPS_PROXY`，需要在 `.env` 中添加 `NO_PROXY` 配置，否则 Docker 容器内部的组件（如 Qdrant、Redis、Elasticsearch）会尝试通过代理访问本地地址，导致连接失败。
+
+在 `.env` 文件中找到如下注释行，删除 `#` 号并保留：
+
+```bash
+NO_PROXY=mineru.net,localhost,127.0.0.1,::1
+no_proxy=mineru.net,localhost,127.0.0.1,::1
+```
+
 ---
 
 ## 第四步：拉取镜像并启动服务
@@ -90,38 +107,47 @@ docker compose up -d
 docker compose ps
 ```
 
-当所有服务显示 `healthy` 或 `running` 状态时，表示启动成功：
+正常情况下，以下 8 个服务应全部显示 `healthy` 或 `running`，`minio-create-bucket` 显示 `Exited (0)` 属于正常（它是一次性初始化任务，完成后退出）：
 
 ```
-NAME                    STATUS
-aperag-api              Up X minutes (healthy)
-aperag-frontend         Up X minutes
-aperag-postgres         Up X minutes (healthy)
-aperag-redis            Up X minutes (healthy)
-...
+aperag-api               Up X minutes (healthy)
+aperag-frontend          Up X minutes
+aperag-indexing-worker   Up X minutes
+aperag-postgres          Up X minutes (healthy)
+aperag-postgres-graph    Up X minutes (healthy)
+aperag-redis             Up X minutes (healthy)
+aperag-qdrant            Up X minutes (healthy)
+aperag-es                Up X minutes (healthy)
+aperag-minio             Up X minutes (healthy)
+aperag-minio-init        Exited (0)          ← 正常，初始化完成退出
 ```
 
 > **如果某个服务一直显示 `starting`**，等待 3 分钟后再次运行 `docker compose ps` 查看。
 
 ---
 
-## 第五步：初始化系统（仅首次部署需要）
+## 第五步：初始化系统（⚠️ 仅首次部署需要，切勿重复执行）
 
-> 此步骤需要安装 Python requests 库，并需要真实的 API Key 才能完成。
+> ⚠️ **重要**：初始化脚本只需运行一次。重复运行会导致重复创建配置项，请确认是全新部署后再执行。
 
 ```bash
-# 安装依赖
+# 安装依赖（Ubuntu 22.04+ 若报 "externally-managed-environment" 错误，改用下面的命令）
 pip3 install requests
+# 若报错，改用：pip3 install requests --break-system-packages
 
-# 运行初始化脚本（替换下面的密码和 API Key）
-APERAG_ADMIN_PASSWORD=自定义管理员密码 \
-DASHSCOPE_API_KEY=与.env中相同的值 \
+# 加载 .env 中的配置（避免重复填写）
+set -a && source .env && set +a
+
+# 设置管理员密码（自定义，与 .env 无关）
+export APERAG_ADMIN_PASSWORD=自定义管理员密码
+
+# 运行初始化
 python3 scripts/init-local-demo.py
 ```
 
 初始化脚本会自动创建：
-- 管理员账号（用户名 `admin`，密码为上面设置的值）
-- 默认 AI 模型配置
+- 管理员账号（用户名 `admin`，密码为上面设置的 `APERAG_ADMIN_PASSWORD`）
+- 默认 AI 模型和 provider 配置
 
 ---
 
@@ -138,7 +164,11 @@ python3 scripts/init-local-demo.py
 - 用户名：`admin`
 - 密码：第五步中设置的 `APERAG_ADMIN_PASSWORD`
 
-> **查看服务器 IP**：运行 `hostname -I` 或 `ip addr show`
+**查看服务器 IP 地址**：
+
+```bash
+hostname -I
+```
 
 ---
 
@@ -177,15 +207,25 @@ docker compose up -d
 ### 更新到新版本
 
 ```bash
-# 拉取最新配置
+# 1. 拉取最新配置
 git pull
 
-# 拉取新版本镜像
+# 2. 拉取新版本镜像
 docker compose pull
 
-# 重启服务
+# 3. 重启服务
 docker compose down
 docker compose up -d
+```
+
+> ⚠️ **重要**：大版本升级（如 2.1.x → 2.2.x）前请先查看 release note，可能包含数据库 schema 迁移步骤，需要按顺序执行，不可跳过。
+
+### 彻底清理（危险，数据不可恢复）
+
+```bash
+# 停止并删除所有数据卷
+docker compose down -v
+docker volume prune
 ```
 
 ---
@@ -197,24 +237,35 @@ docker compose up -d
 # 检查 .env 文件是否存在
 ls -la .env
 # 如果不存在，重新执行第三步
+cp envs/env.template .env
 ```
 
 **问题 2：某个服务一直不健康（unhealthy）**
 ```bash
 # 查看该服务的详细日志
 docker compose logs <服务名>
-# 例如：docker compose logs api
+# 例如：
+docker compose logs api
+docker compose logs es
 ```
 
 **问题 3：端口被占用**
 ```bash
-# 查看哪个进程占用了 3000 端口
+# Linux - 查看占用 3000 端口的进程
 lsof -i :3000
+# 找到 PID 后停止该进程
+kill -9 <PID>
+
+# 常用端口：3000（前端）、8000（API）、5432（数据库）、6379（Redis）、6333（Qdrant）、9200（ES）
 ```
 
-**问题 4：磁盘空间不足**
+**问题 4：Qdrant / Redis 连接报 "Server disconnected" 错误**
+
+通常是公司 HTTP 代理拦截了内部请求，请参考**第三步 3.3** 添加 `NO_PROXY` 配置后重启服务。
+
+**问题 5：磁盘空间不足**
 ```bash
-# 清理不用的 Docker 资源
+# 清理不用的 Docker 资源（不影响正在运行的容器）
 docker system prune
 ```
 
