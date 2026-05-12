@@ -52,10 +52,10 @@ cp envs/env.template .env
 #    运行下面命令生成随机密钥：openssl rand -hex 32
 JWT_SECRET=在这里填写随机字符串
 
-# 2. 阿里云百炼 API Key（必填，用于 AI 对话能力）
+# 2. 阿里云百炼 API Key
 DASHSCOPE_API_KEY=sk-xxxx
 
-# 3. OpenRouter API Key（用于接入其他 AI 模型）
+# 3. OpenRouter API Key
 OPENROUTER_API_KEY=sk-or-v1-xxxx
 ```
 
