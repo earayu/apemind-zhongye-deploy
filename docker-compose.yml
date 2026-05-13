@@ -121,6 +121,10 @@ services:
       # API handles auth/enqueue; indexing-worker owns parse/index/cleanup.
       - DB_POOL_SIZE=10
       - DB_POOL_MAX_OVERFLOW=10
+      # ApeRAG agent runtime 调用内部 MCP server 的地址。
+      # 默认值 localhost:8000 在 indexing-worker 容器内找不到 api，
+      # 必须用 docker service name 显式指定，否则 agent chat 报 ConnectError。
+      - APERAG_MCP_URL=http://api:8000/mcp/
     command: ["/app/scripts/entrypoint.sh", "python", "-m", "aperag.cli.indexing_worker"]
     restart: on-failure
 
