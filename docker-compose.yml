@@ -125,6 +125,9 @@ services:
       # 默认值 localhost:8000 在 indexing-worker 容器内找不到 api，
       # 必须用 docker service name 显式指定，否则 agent chat 报 ConnectError。
       - APERAG_MCP_URL=http://api:8000/mcp/
+      # Embedding batch size：32 对大段中文文档会超出 DashScope batch limit
+      # 导致 BadRequestError。改为 4（慢但稳定）。
+      - EMBEDDING_MAX_CHUNKS_IN_BATCH=4
     command: ["/app/scripts/entrypoint.sh", "python", "-m", "aperag.cli.indexing_worker"]
     restart: on-failure
 
