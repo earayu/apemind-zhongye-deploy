@@ -53,6 +53,10 @@ services:
       - envs/docker.env.overrides
     ports:
       - "8000:8000"
+    ulimits:
+      nofile:
+        soft: 65535
+        hard: 65535
     command: ["/app/scripts/entrypoint.sh", "/app/scripts/start-api.sh"]
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:8000/health || curl -f http://localhost:8000/docs || exit 1"]
@@ -133,6 +137,10 @@ services:
       # 经验值来自 2026-05-13 ziang 二分探测：8/10/12/16/20/24/25 全过，
       # 26/28/30/32 全 400。
       - EMBEDDING_MAX_CHUNKS_IN_BATCH=25
+    ulimits:
+      nofile:
+        soft: 65535
+        hard: 65535
     command: ["/app/scripts/entrypoint.sh", "python", "-m", "aperag.cli.indexing_worker"]
     restart: on-failure
 
