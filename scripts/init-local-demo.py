@@ -7,9 +7,9 @@ are missing or need to be updated.
 
 Secrets are read from environment variables or command-line arguments.
 Do not hard-code provider keys or admin passwords in this file.
-"""
 
-from __future__ import annotations
+Requirements: Python >= 3.7 (dataclasses module)
+"""
 
 import argparse
 import os
@@ -17,7 +17,20 @@ import secrets
 import string
 import sys
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, Dict, List, Optional, Tuple
+
+if sys.version_info < (3, 7):
+    print(
+        "错误：此脚本需要 Python 3.7 或更高版本，当前版本为 Python {}.{}。\n"
+        "提示：脚本是可选步骤，可以直接访问系统页面完成初始化：\n"
+        "  1. 打开浏览器访问 http://<服务器IP>:3000\n"
+        "  2. 注册账号（第一个注册的账号即为管理员账号）\n"
+        "  3. 在「管理员」→「模型配置」页面手动添加 AI Provider".format(
+            sys.version_info.major, sys.version_info.minor
+        ),
+        file=sys.stderr,
+    )
+    sys.exit(1)
 
 DEFAULT_ADMIN_USERNAME = "admin"
 DEFAULT_ADMIN_EMAIL = "admin@aperag.local"
@@ -31,7 +44,7 @@ class AccountSpec:
     name: str
     display_name: str
     base_url: str
-    api_key: str | None
+    api_key: Optional[str]
 
 
 @dataclass(frozen=True)
@@ -40,15 +53,15 @@ class ModelSpec:
     provider_model_id: str
     display_name: str
     capability: str
-    attrs: dict[str, Any] = field(default_factory=dict)
+    attrs: Dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass(frozen=True)
 class ModelUseSpec:
     scenario: str
     strategy: str
-    primary: tuple[str, str]
-    fallbacks: list[tuple[str, str]] = field(default_factory=list)
+    primary: Tuple[str, str]
+    fallbacks: List[Tuple[str, str]] = field(default_factory=list)
 
 
 MODEL_SPECS = [
@@ -240,13 +253,13 @@ class ApeRAGClient:
     def login(self, username: str, password: str) -> None:
         self.request("POST", "/api/v2/auth/login", json={"username": username, "password": password})
 
-    def list_model_accounts(self, scope: str) -> list[dict[str, Any]]:
+    def list_model_accounts(self, scope: str) -> List[Dict[str, Any]]:
         return self.request("GET", "/api/v2/model-accounts", params={"scope": scope}).json().get("items", [])
 
-    def create_model_account(self, payload: dict[str, Any], scope: str) -> dict[str, Any]:
+    def create_model_account(self, payload: Dict[str, Any], scope: str) -> Dict[str, Any]:
         return self.request("POST", "/api/v2/model-accounts", json=payload, params={"scope": scope}).json()
 
-    def update_model_account(self, account_id: str, payload: dict[str, Any], scope: str) -> dict[str, Any]:
+    def update_model_account(self, account_id: str, payload: Dict[str, Any], scope: str) -> Dict[str, Any]:
         return self.request(
             "PUT",
             f"/api/v2/model-accounts/{account_id}",
@@ -254,23 +267,23 @@ class ApeRAGClient:
             params={"scope": scope},
         ).json()
 
-    def list_models(self, account_id: str, scope: str) -> list[dict[str, Any]]:
+    def list_models(self, account_id: str, scope: str) -> List[Dict[str, Any]]:
         return (
             self.request("GET", f"/api/v2/model-accounts/{account_id}/models", params={"scope": scope})
             .json()
             .get("items", [])
         )
 
-    def create_model(self, payload: dict[str, Any], scope: str) -> dict[str, Any]:
+    def create_model(self, payload: Dict[str, Any], scope: str) -> Dict[str, Any]:
         return self.request("POST", "/api/v2/models", json=payload, params={"scope": scope}).json()
 
-    def update_model(self, model_id: str, payload: dict[str, Any], scope: str) -> dict[str, Any]:
+    def update_model(self, model_id: str, payload: Dict[str, Any], scope: str) -> Dict[str, Any]:
         return self.request("PUT", f"/api/v2/models/{model_id}", json=payload, params={"scope": scope}).json()
 
-    def list_model_uses(self, scope: str) -> list[dict[str, Any]]:
+    def list_model_uses(self, scope: str) -> List[Dict[str, Any]]:
         return self.request("GET", "/api/v2/model-uses", params={"scope": scope}).json().get("items", [])
 
-    def update_model_use(self, scenario: str, payload: dict[str, Any], scope: str) -> dict[str, Any]:
+    def update_model_use(self, scenario: str, payload: Dict[str, Any], scope: str) -> Dict[str, Any]:
         return self.request(
             "PUT",
             f"/api/v2/model-uses/{scenario}",
@@ -279,7 +292,7 @@ class ApeRAGClient:
         ).json()
 
 
-def env(name: str, default: str | None = None) -> str | None:
+def env(name: str, default: Optional[str] = None) -> Optional[str]:
     value = os.environ.get(name)
     if value is None or value == "":
         return default
@@ -295,7 +308,7 @@ def log(message: str) -> None:
     print(message, flush=True)
 
 
-def build_account_specs(args: argparse.Namespace) -> list[AccountSpec]:
+def build_account_specs(args: argparse.Namespace) -> List[AccountSpec]:
     return [
         AccountSpec(
             key="dashscope",
@@ -330,13 +343,13 @@ def ensure_admin(client: ApeRAGClient, args: argparse.Namespace) -> None:
 
 def ensure_accounts(
     client: ApeRAGClient,
-    account_specs: list[AccountSpec],
+    account_specs: List[AccountSpec],
     scope: str,
     update_existing_keys: bool,
-) -> dict[str, str]:
+) -> Dict[str, str]:
     log("== 2. Model accounts ==")
     existing = {item["name"]: item for item in client.list_model_accounts(scope)}
-    account_id_by_key: dict[str, str] = {}
+    account_id_by_key: Dict[str, str] = {}
 
     for spec in account_specs:
         existing_account = existing.get(spec.name)
@@ -379,14 +392,14 @@ def ensure_accounts(
     return account_id_by_key
 
 
-def ensure_models(client: ApeRAGClient, account_id_by_key: dict[str, str], scope: str) -> dict[tuple[str, str], str]:
+def ensure_models(client: ApeRAGClient, account_id_by_key: Dict[str, str], scope: str) -> Dict[Tuple[str, str], str]:
     log("== 3. Models ==")
-    existing_model_by_key: dict[tuple[str, str], dict[str, Any]] = {}
+    existing_model_by_key: Dict[Tuple[str, str], Dict[str, Any]] = {}
     for account_key, account_id in account_id_by_key.items():
         for model in client.list_models(account_id, scope):
             existing_model_by_key[(account_key, model["provider_model_id"])] = model
 
-    model_id_by_key: dict[tuple[str, str], str] = {}
+    model_id_by_key: Dict[Tuple[str, str], str] = {}
     for spec in MODEL_SPECS:
         account_id = account_id_by_key.get(spec.account_key)
         if not account_id:
@@ -417,7 +430,7 @@ def ensure_models(client: ApeRAGClient, account_id_by_key: dict[str, str], scope
     return model_id_by_key
 
 
-def ensure_model_uses(client: ApeRAGClient, model_id_by_key: dict[tuple[str, str], str], scope: str) -> None:
+def ensure_model_uses(client: ApeRAGClient, model_id_by_key: Dict[Tuple[str, str], str], scope: str) -> None:
     log("== 4. Model uses ==")
     existing_uses = {item["scenario"]: item for item in client.list_model_uses(scope)}
 
