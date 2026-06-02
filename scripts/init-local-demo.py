@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Initialize a local ApeRAG Docker Compose demo environment.
+"""Initialize a local ApeMind Docker Compose demo environment.
 
 The script is intentionally idempotent: it creates the admin user,
 public model accounts, models, and model-use defaults only when they
@@ -463,7 +463,7 @@ def ensure_model_uses(client: ApeRAGClient, model_id_by_key: Dict[Tuple[str, str
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Initialize a local ApeRAG Docker Compose demo.")
+    parser = argparse.ArgumentParser(description="Initialize a local ApeMind Docker Compose demo.")
     parser.add_argument("--api-url", default=env("APERAG_API_URL", DEFAULT_API_URL))
     parser.add_argument("--scope", choices=["public", "user"], default=env("APERAG_INIT_SCOPE", "public"))
     parser.add_argument("--admin-username", default=env("APERAG_ADMIN_USERNAME", DEFAULT_ADMIN_USERNAME))

@@ -1,6 +1,6 @@
-# ApeRAG 私有化部署指南
+# ApeMind 私有化部署指南
 
-本仓库包含部署 ApeRAG 知识库系统所需的全部配置文件，不含源代码。
+本仓库包含部署 ApeMind 知识库系统所需的全部配置文件，不含源代码。
 
 ---
 
@@ -58,11 +58,8 @@ cp envs/env.template .env
 #    运行下面命令生成随机密钥：openssl rand -hex 32
 JWT_SECRET=在这里填写随机字符串
 
-# 2. 阿里云百炼 API Key
-DASHSCOPE_API_KEY=sk-xxxx
-
-# 3. OpenRouter API Key
-OPENROUTER_API_KEY=sk-or-v1-xxxx
+# 2. 其他 AI Provider API Key 可在管理员页面配置；
+#    如果使用初始化脚本批量创建模型，再按脚本说明导出对应环境变量。
 ```
 
 > ⚠️ **安全提示**：`.env` 文件包含密钥，请勿发送给他人，请勿上传到任何代码仓库。
@@ -90,8 +87,8 @@ docker compose pull
 
 看到类似输出表示成功：
 ```
-✔ Image docker.io/apecloud/aperag-enterprise:2.1.6   Pulled
-✔ Image docker.io/apecloud/aperag-enterprise-frontend:2.1.6   Pulled
+✔ Image docker.io/apecloud/apemind-enterprise:v2.3.4   Pulled
+✔ Image docker.io/apecloud/apemind-enterprise-frontend:v2.3.4   Pulled
 ...
 ```
 
@@ -107,19 +104,20 @@ docker compose up -d
 docker compose ps
 ```
 
-正常情况下，以下 9 个长期服务应全部显示 `healthy` 或 `running`，`aperag-minio-init` 显示 `Exited (0)` 属于正常（它是一次性初始化任务，完成后退出）：
+正常情况下，以下长期服务应全部显示 `healthy` 或 `running`，`apemind-minio-init` 显示 `Exited (0)` 属于正常（它是一次性初始化任务，完成后退出）：
 
 ```
-aperag-api               Up X minutes (healthy)
-aperag-frontend          Up X minutes
-aperag-indexing-worker   Up X minutes
-aperag-postgres          Up X minutes (healthy)
-aperag-postgres-graph    Up X minutes (healthy)
-aperag-redis             Up X minutes (healthy)
-aperag-qdrant            Up X minutes (healthy)
-aperag-es                Up X minutes (healthy)
-aperag-minio             Up X minutes (healthy)
-aperag-minio-init        Exited (0)          ← 正常，初始化完成退出
+apemind-api               Up X minutes (healthy)
+apemind-frontend          Up X minutes
+apemind-nginx             Up X minutes
+apemind-indexing-worker   Up X minutes
+apemind-postgres          Up X minutes (healthy)
+apemind-postgres-graph    Up X minutes (healthy)
+apemind-redis             Up X minutes (healthy)
+apemind-qdrant            Up X minutes (healthy)
+apemind-es                Up X minutes (healthy)
+apemind-minio             Up X minutes (healthy)
+apemind-minio-init        Exited (0)          ← 正常，初始化完成退出
 ```
 
 > **如果某个服务一直显示 `starting`**，等待 3 分钟后再次运行 `docker compose ps` 查看。
@@ -204,7 +202,7 @@ docker compose down
 docker compose up -d
 ```
 
-### 更新到新版本
+### 更新到新版本（保留数据）
 
 ```bash
 # 1. 拉取最新配置
@@ -213,18 +211,26 @@ git pull
 # 2. 拉取新版本镜像
 docker compose pull
 
-# 3. 重启服务
-docker compose down
-docker compose up -d
+# 3. 重建容器，让 docker-compose.yml / nginx.conf / init-es.sh 等变更全部生效
+docker compose up -d --force-recreate
 ```
 
 > ⚠️ **重要**：大版本升级（如 2.1.x → 2.2.x）前请先查看 release note，可能包含数据库 schema 迁移步骤，需要按顺序执行，不可跳过。
 
-### 彻底清理（危险，数据不可恢复）
+### 彻底清理并升级（危险，数据不可恢复）
+
+本次中冶升级已和客户确认可以不保留旧数据。执行下面命令会删除旧系统容器和所有数据卷，然后用当前仓库配置重新启动最新版本：
 
 ```bash
-# 停止并删除所有数据卷
+# 停止并删除所有数据卷（不可恢复）
 docker compose down -v
+
+# 拉取最新配置和镜像
+git pull
+docker compose pull
+
+# 全新启动
+docker compose up -d --force-recreate
 ```
 
 ---
@@ -250,7 +256,7 @@ docker compose logs es
 
 **问题 3：端口被占用**
 
-首先一次性查看所有 ApeRAG 所需端口是否冲突：
+首先一次性查看所有 ApeMind 所需端口是否冲突：
 ```bash
 sudo ss -lntp | grep -E ":(3000|8000|5432|5433|6379|6333|9200|9000)"
 ```
@@ -299,5 +305,5 @@ docker system prune
 
 ## 版本信息
 
-- 当前版本：`2.1.6`
-- 镜像来源：Docker Hub 公开镜像（`docker.io/apecloud/aperag-enterprise:2.1.6`）
+- 当前版本：`v2.3.4`
+- 镜像来源：Docker Hub 公开镜像（`docker.io/apecloud/apemind-enterprise:v2.3.4`）
