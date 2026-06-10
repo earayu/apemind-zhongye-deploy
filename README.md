@@ -87,8 +87,8 @@ docker compose pull
 
 看到类似输出表示成功：
 ```
-✔ Image docker.io/apecloud/apemind-enterprise:v2.3.5   Pulled
-✔ Image docker.io/apecloud/apemind-enterprise-frontend:v2.3.5   Pulled
+✔ Image docker.io/apecloud/apemind-enterprise:v2.3.30   Pulled
+✔ Image docker.io/apecloud/apemind-enterprise-frontend:v2.3.30   Pulled
 ...
 ```
 
@@ -305,5 +305,5 @@ docker system prune
 
 ## 版本信息
 
-- 当前版本：`v2.3.5`
-- 镜像来源：Docker Hub 公开镜像（`docker.io/apecloud/apemind-enterprise:v2.3.5`）
+- 当前版本：`v2.3.30`
+- 镜像来源：Docker Hub 公开镜像（`docker.io/apecloud/apemind-enterprise:v2.3.30`）
