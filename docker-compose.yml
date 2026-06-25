@@ -245,15 +245,11 @@ services:
     container_name: apemind-minio-init
     depends_on:
       minio:
-        condition: service_started
-    entrypoint: >
-      /bin/sh -c "
-      until mc alias set local http://apemind-minio:9000 minioadmin minioadmin; do
-        echo 'Waiting for MinIO to be ready...'; sleep 3;
-      done &&
-      mc mb --ignore-existing local/aperag &&
-      echo 'MinIO bucket aperag ready.'
-      "
+        condition: service_healthy
+    environment:
+      - MC_HOST_local=http://minioadmin:minioadmin@apemind-minio:9000
+    entrypoint: ["mc"]
+    command: ["mb", "--ignore-existing", "local/aperag"]
     restart: "no"
 
   # ==============================================
