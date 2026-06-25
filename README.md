@@ -30,7 +30,7 @@ df -h .
 Fatal glibc error: CPU does not support x86-64-v2
 ```
 
-本仓库已特意将 `minio/minio` 和 `minio/mc` 固定到 2023 年的兼容版本；后续升级 ApeMind 版本时不要顺手把这两个 MinIO 镜像同步回标准化仓库的新版本，除非已经确认客户服务器 CPU/VM model 支持 x86-64-v2。
+本仓库已特意将 `minio/minio` 和 `minio/mc` 固定到 2021 年的现场验证兼容版本；后续升级 ApeMind 版本时不要顺手把这两个 MinIO 镜像同步回标准化仓库的新版本，除非已经确认客户服务器 CPU/VM model 支持 x86-64-v2。
 
 > **如果 `docker compose` 命令不可用**，在 Ubuntu 上运行以下命令安装：
 > ```bash
@@ -140,7 +140,7 @@ apemind-minio-init        Exited (0)          ← 正常，初始化完成退出
 > ```bash
 > grep -E "minio/(minio|mc):" docker-compose.yml
 > ```
-> 期望看到 `minio/minio:RELEASE.2023-11-20T22-40-07Z` 和 `minio/mc:RELEASE.2023-11-20T16-30-59Z`。若不是，请先 `git pull` 更新仓库；不要删除 `apemind-minio-data` 数据卷。
+> 期望看到 `minio/minio:RELEASE.2021-10-06T23-36-31Z` 和 `minio/mc:RELEASE.2021-10-07T04-19-58Z`。若不是，请先 `git pull` 更新仓库；不要删除 `apemind-minio-data` 数据卷。
 
 ---
 
