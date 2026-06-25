@@ -205,6 +205,13 @@ docker compose up -d
 ### 更新到新版本（保留数据）
 
 ```bash
+# 0. 升级前确认当前运行版本，并备份两个 PostgreSQL 数据库
+docker compose images | grep -E 'apemind-enterprise|apemind-enterprise-frontend'
+
+mkdir -p backups
+docker compose exec -T postgres pg_dump -U postgres -d aperag -Fc > backups/aperag-$(date +%Y%m%d%H%M%S).dump
+docker compose exec -T postgres-graph pg_dump -U postgres -d aperag_graph -Fc > backups/aperag_graph-$(date +%Y%m%d%H%M%S).dump
+
 # 1. 拉取最新配置
 git pull
 
@@ -213,9 +220,16 @@ docker compose pull
 
 # 3. 重建容器，让 docker-compose.yml / nginx.conf / init-es.sh 等变更全部生效
 docker compose up -d --force-recreate
+
+# 4. 验证服务状态和数据库迁移版本
+docker compose ps
+docker compose exec postgres psql -U postgres -d aperag -c "SELECT version_num FROM alembic_version;"
+docker compose images | grep -E 'apemind-enterprise|apemind-enterprise-frontend'
 ```
 
-> ⚠️ **重要**：大版本升级（如 2.1.x → 2.2.x）前请先查看 release note，可能包含数据库 schema 迁移步骤，需要按顺序执行，不可跳过。
+> ⚠️ **重要**：升级到当前版本 `v2.3.56` 后，`alembic_version` 应为 `9a1b2c3d4e5f`。大版本升级（如 2.1.x → 2.2.x）前请先查看 release note，可能包含数据库 schema 迁移步骤，需要按顺序执行，不可跳过。
+>
+> 如果现场使用独立的自托管 MinerU/GPU 解析服务，它不在本仓库 `docker compose` 管理范围内；本次应用镜像升级不需要变更 MinerU 服务。
 
 ### 彻底清理并升级（危险，数据不可恢复）
 
