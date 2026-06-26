@@ -97,8 +97,8 @@ docker compose pull
 
 看到类似输出表示成功：
 ```
-✔ Image docker.io/apecloud/apemind-enterprise:v2.3.56   Pulled
-✔ Image docker.io/apecloud/apemind-enterprise-frontend:v2.3.56   Pulled
+✔ Image docker.io/apecloud/apemind-enterprise:v2.3.57   Pulled
+✔ Image docker.io/apecloud/apemind-enterprise-frontend:v2.3.57   Pulled
 ...
 ```
 
@@ -247,7 +247,7 @@ docker compose exec postgres psql -U postgres -d aperag -c "SELECT version_num F
 docker compose images | grep -E 'apemind-enterprise|apemind-enterprise-frontend'
 ```
 
-> ⚠️ **重要**：升级到当前版本 `v2.3.56` 后，`alembic_version` 应为 `9a1b2c3d4e5f`。大版本升级（如 2.1.x → 2.2.x）前请先查看 release note，可能包含数据库 schema 迁移步骤，需要按顺序执行，不可跳过。
+> ⚠️ **重要**：升级到当前版本 `v2.3.57` 后，`alembic_version` 应为 `9a1b2c3d4e5f`。大版本升级（如 2.1.x → 2.2.x）前请先查看 release note，可能包含数据库 schema 迁移步骤，需要按顺序执行，不可跳过。
 >
 > 如果现场使用独立的自托管 MinerU/GPU 解析服务，它不在本仓库 `docker compose` 管理范围内；本次应用镜像升级不需要变更 MinerU 服务。
 
@@ -339,5 +339,5 @@ docker system prune
 
 ## 版本信息
 
-- 当前版本：`v2.3.56`
-- 镜像来源：Docker Hub 公开镜像（`docker.io/apecloud/apemind-enterprise:v2.3.56`）
+- 当前版本：`v2.3.57`
+- 镜像来源：Docker Hub 公开镜像（`docker.io/apecloud/apemind-enterprise:v2.3.57`）
