@@ -97,8 +97,8 @@ docker compose pull
 
 看到类似输出表示成功：
 ```
-✔ Image docker.io/apecloud/apemind-enterprise:v2.3.68   Pulled
-✔ Image docker.io/apecloud/apemind-enterprise-frontend:v2.3.68   Pulled
+✔ Image docker.io/apecloud/apemind-enterprise:v2.3.70   Pulled
+✔ Image docker.io/apecloud/apemind-enterprise-frontend:v2.3.70   Pulled
 ...
 ```
 
@@ -251,7 +251,9 @@ docker compose exec postgres psql -U postgres -d aperag -c "SELECT version_num F
 docker compose images | grep -E 'apemind-enterprise|apemind-enterprise-frontend'
 ```
 
-> ⚠️ **重要**：从仓库上一版 `v2.3.59` 升级到 `v2.3.68` 会执行 3 个元数据 PostgreSQL 迁移（审计日志字段注释、OAuth 身份唯一约束、API 调用台账表）。升级前必须完成两套 PostgreSQL 备份，且上面的 OAuth 重复检查必须返回 0 行；如有结果，先停止升级并确认重复账号处置，不能直接删除。升级后 `alembic_version` 应为 `c3f1a2b4d5e6`。如迁移失败，不要反复重启或手工改版本表，先保留日志并回退应用镜像，数据库恢复以升级前备份为准。
+> ⚠️ **重要**：
+> - 若现场仍停在 `v2.3.59`（或更早）再升到 `v2.3.70`，会先经过 `v2.3.68` 引入的 3 个元数据 PostgreSQL 迁移（审计日志字段注释、OAuth 身份唯一约束、API 调用台账表）。升级前必须完成两套 PostgreSQL 备份，且上面的 OAuth 重复检查必须返回 0 行；如有结果，先停止升级并确认重复账号处置，不能直接删除。升级后 `alembic_version` 应为 `c3f1a2b4d5e6`。如迁移失败，不要反复重启或手工改版本表，先保留日志并回退应用镜像，数据库恢复以升级前备份为准。
+> - 若现场**已经是** `v2.3.68`，升到 `v2.3.70` **无新增** metadata/graph Alembic 版本文件（应用镜像/运行时品牌相关变更）；仍建议升级前备份，并在升级后核对 `alembic_version` 仍为 `c3f1a2b4d5e6`。
 >
 > 如果现场使用独立的自托管 MinerU/GPU 解析服务，它不在本仓库 `docker compose` 管理范围内；本次应用镜像升级不需要变更 MinerU 服务。
 
@@ -343,5 +345,5 @@ docker system prune
 
 ## 版本信息
 
-- 当前版本：`v2.3.68`
-- 镜像来源：Docker Hub 公开镜像（`docker.io/apecloud/apemind-enterprise:v2.3.68`）
+- 当前版本：`v2.3.70`
+- 镜像来源：Docker Hub 公开镜像（`docker.io/apecloud/apemind-enterprise:v2.3.70`）
